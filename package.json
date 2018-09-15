@@ -1,0 +1,21 @@
+{
+  "name": "get-dev-paths",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "repository": "aleclarson/get-dev-paths",
+  "description": "Search node_modules for locally developed packages",
+  "dependencies": {
+    "type-error": "^1.0.3"
+  },
+  "devDependencies": {
+    "coffeescript": "^2.3.0",
+    "wch-coffee": "*"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "coffee-build src -o lib"
+  }
+}
