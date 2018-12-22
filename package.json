@@ -6,6 +6,7 @@
   "repository": "aleclarson/get-dev-paths",
   "description": "Search node_modules for locally developed packages",
   "dependencies": {
+    "realpath-native": "^1.0.2",
     "type-error": "^1.0.3"
   },
   "devDependencies": {

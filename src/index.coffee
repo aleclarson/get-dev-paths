@@ -1,6 +1,9 @@
 TypeError = require 'type-error'
+realpath = require 'realpath-native'
 path = require 'path'
 fs = require 'fs'
+
+nodeModulesRE = /\/node_modules\//
 
 getDevPaths = (root, opts = {}) ->
   if typeof root != 'string'
@@ -8,65 +11,70 @@ getDevPaths = (root, opts = {}) ->
   if !path.isAbsolute root
     throw Error '`root` argument must be an absolute path'
 
+  # Default options
+  opts.preserveLinks ?= true
+  opts.onError ?= null
+
   paths = []
+  queue = [root]
+  visited = new Set(queue)
+
+  # Search the "node_modules" of the given package.
   search = (root) ->
+    depsDir = path.join root, 'node_modules'
+    return if !fs.existsSync depsDir
 
     pack = path.join root, 'package.json'
-    return if !fs.existsSync pack
-
-    try pack = JSON.parse fs.readFileSync pack, 'utf8'
+    try pack = require pack
     catch err
-      return opts.onError? new Error """
-        Failed to parse: #{pack}
-        #{err.message}
-      """
+      return opts.onError? err
 
     # We only care about non-dev dependencies.
-    deps = pack.dependencies
-    return if !deps
+    if deps = pack.dependencies
 
-    root = path.join root, 'node_modules'
-    fs.existsSync(root) and
-      getDependencyPaths(root, deps).forEach (dep) ->
-        if !isNodeModules dep, opts
+      addPath = (dep) ->
+        # We only care about linked dependencies.
+        return if !fs.lstatSync(dep).isSymbolicLink()
+
+        try target = realpath.sync dep
+        catch err
+          return opts.onError? err
+
+        # Skip target paths with "/node_modules/" in them.
+        if nodeModulesRE.test target
+          return opts.onError? new Error "Symlink leads to nothing: '#{dep}'"
+
+        if opts.preserveLinks
           paths.push dep
-          search dep
+
+        # Avoid crawling the same directory twice.
+        if !visited.has target
+          visited.add target
+          paths.push target if !opts.preserveLinks
+          queue.push dep
         return
 
-  search root
+      # Search the "node_modules" directory.
+      fs.readdirSync(depsDir).forEach (name) ->
+
+        if name[0] == '.'
+          return # Skip hidden directories.
+
+        if name[0] == '@'
+          scope = name
+          fs.readdirSync(path.join depsDir, name).forEach (name) ->
+            if deps[name = scope + '/' + name]
+              addPath path.join depsDir, name
+
+        else if deps[name]
+          addPath path.join depsDir, name
+        return
+
+  # Perform a breadth-first search.
+  while queue.length
+    next = queue
+    queue = []
+    next.forEach search
   paths
 
 module.exports = getDevPaths
-
-#
-# Internal
-#
-
-nodeModulesRE = /\/node_modules\//
-
-isNodeModules = (dep, opts) ->
-  try nodeModulesRE.test fs.realpathSync(dep)
-  catch err
-    opts.onError? new Error """
-      Symlink leads to nowhere: #{dep}
-    """
-    true
-
-getDependencyPaths = (root, deps) ->
-  paths = []
-
-  fs.readdirSync(root).forEach (name) ->
-    return if name[0] == '.'
-    dep = path.join root, name
-
-    if name[0] == '@'
-      scope = name
-      fs.readdirSync(dep).forEach (name) ->
-        if deps[scope + '/' + name]
-          paths.push path.join dep, name
-
-    else if deps[name]
-      paths.push dep
-      return
-
-  paths
