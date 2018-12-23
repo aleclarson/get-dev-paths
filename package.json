@@ -11,12 +11,21 @@
   },
   "devDependencies": {
     "coffeescript": "^2.3.0",
+    "jest": "^23.6.0",
     "wch-coffee": "*"
   },
   "files": [
     "lib"
   ],
   "scripts": {
-    "build": "coffee-build src -o lib"
+    "build": "coffee-build src -o lib",
+    "test": "node -r coffeescript/register ./node_modules/jest/bin/jest.js --coverage"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "coffee", "js", "json"
+    ],
+    "testEnvironment": "node",
+    "testRegex": "spec/.+\\.spec\\.coffee$"
   }
 }
