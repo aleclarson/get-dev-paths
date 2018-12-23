@@ -42,7 +42,7 @@ getDevPaths = (root, opts = {}) ->
 
         # Skip target paths with "/node_modules/" in them.
         if nodeModulesRE.test target
-          return opts.onError? new Error "Symlink leads to nothing: '#{dep}'"
+          return opts.onError? new Error "Target path cannot contain /node_modules/: '#{dep}'"
 
         if opts.preserveLinks
           paths.push dep
