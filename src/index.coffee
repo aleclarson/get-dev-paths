@@ -11,6 +11,7 @@ getDevPaths = (root, opts = {}) ->
   if !path.isAbsolute root
     throw Error '`root` argument must be an absolute path'
 
+  opts.ignore ?= /^$/
 
   paths = []
   queue = [root]
@@ -60,10 +61,11 @@ getDevPaths = (root, opts = {}) ->
         if name[0] == '@'
           scope = name
           fs.readdirSync(path.join depsDir, name).forEach (name) ->
-            if deps[name = scope + '/' + name]
+            name = scope + '/' + name
+            if deps[name] and !opts.ignore.test name
               addPath path.join depsDir, name
 
-        else if deps[name]
+        else if deps[name] and !opts.ignore.test name
           addPath path.join depsDir, name
         return
 
