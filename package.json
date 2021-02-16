@@ -10,13 +10,13 @@
     "type-error": "^1.0.3"
   },
   "devDependencies": {
-    "coffeescript": "^2.3.0",
-    "wch-coffee": "*"
+    "coffeescript": "^2.3.0"
   },
   "files": [
     "lib"
   ],
   "scripts": {
-    "build": "coffee-build src -o lib"
+    "build": "coffee -o lib -c src",
+    "dev": "coffee -w -o lib -c src"
   }
 }
