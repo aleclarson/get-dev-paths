@@ -11,9 +11,6 @@ getDevPaths = (root, opts = {}) ->
   if !path.isAbsolute root
     throw Error '`root` argument must be an absolute path'
 
-  # Default options
-  opts.preserveLinks ?= true
-  opts.onError ?= null
 
   paths = []
   queue = [root]
